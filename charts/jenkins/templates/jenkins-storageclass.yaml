@@ -1,0 +1,9 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Release.Name }}-storageclass
+provisioner: {{ .Values.storageClass.provisioner }}
+parameters:
+  type: {{ .Values.storageClass.parameters.type }}
+reclaimPolicy: {{ .Values.storageClass.reclaimPolicy }}
+volumeBindingMode: Immediate

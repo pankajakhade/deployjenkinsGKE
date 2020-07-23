@@ -1,0 +1,52 @@
+images:
+  registry: "jenkins/jenkins"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+ingress:
+  annotations:
+    kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/ingress.global-static-ip-name: jenkins-gke-ip
+    networking.gke.io/managed-certificates: ssl-cert
+    #cloud.google.com/load-balancer-type: "Internal"
+  # you can set domain name to access jenkins URL
+  domain:
+  # you can set environment like dev, prod, test
+  environment:
+
+nginx-ingress:
+  enabled: true
+  rbac:
+    create: true
+  controller:
+# publishService Allows customization of the external service the ingress will
+# be bound to via DNS.
+    publishService:
+      enabled: true
+
+service:
+  ports:
+    master: 8080
+    slave: 30001
+  targetPorts:
+    master: 8080
+    slave: 30001
+  type: ClusterIP
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
+    beta.cloud.google.com/backend-config: '{"default": "config-default"}'
+
+statefulset:
+  replicas: 1
+  container:
+    port: 8080
+
+pvclaim:
+  create: true
+  storage: 12Gi
+
+storageClass:
+  provisioner: kubernetes.io/gce-pd
+  reclaimPolicy: Retain
+  parameters:
+    type: pd-standard

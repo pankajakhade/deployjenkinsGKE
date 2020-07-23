@@ -1,0 +1,8 @@
+domain: workops.xyz
+dnsPod: False
+staticIP: True
+create: False
+namespace: testing
+env_var: test
+gcp_project_id: service-exploration-280814
+delete: True

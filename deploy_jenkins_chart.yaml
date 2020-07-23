@@ -1,0 +1,80 @@
+- hosts: localhost
+  vars:
+  #  sa_file: "~/Downloads/service-exploration-280814-57f53738df29.json"
+    sa_file: "{{ lookup('env','gcp_service_account_file') }}"
+  vars_files:
+    - external_vars.yaml
+  # Create
+  tasks:
+  - name: Installing jenkins helm chart
+    block:
+      - name: Create a k8s namespace
+        k8s:
+          name: "{{ namespace }}"
+          api_version: v1
+          kind: Namespace
+          state: present
+      - name: Jinja templating external dns pod manifests
+        template:
+          src: external-dns.yaml.j2
+          dest: external-dns.yaml
+      - name: Create a external dns pod
+        k8s:
+         state: present
+         src: external-dns.yaml
+        when: dnsPod == True
+      - name: Adding repo for jenkins
+        shell: |
+          echo "adding repo"
+          helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com/
+        args:
+          executable: /bin/bash
+      - name: Updating helm chart dependencies
+        shell: |
+          echo "updating helm chart dependencies"
+          helm dep update charts/jenkins
+        args:
+          executable: /bin/bash
+      - name: Create a global address for load balancer
+        gcp_compute_global_address:
+          name: "jenkins-gke-ip"
+          project: "{{ gcp_project_id }}"
+          auth_kind: serviceaccount
+          service_account_file: "{{ sa_file }}"
+          state: present
+        when: staticIP == True
+      - name: Installing jenkins helm chart
+        shell: |
+          echo "installing jenkins helm chart"
+          helm install {{ namespace }} charts/jenkins --set ingress.domain={{ domain }} --set ingress.environment={{ env_var }} -n {{ namespace }}
+        args:
+          executable: /bin/bash
+      - name: Remove external-dns manifest output file
+        file:
+          path: external-dns.yaml
+          state: absent
+    when: create == True
+  # Delete
+  - name: Uninstalling jenkins helm chart
+    block:
+      - name: Uninstalling jenkins helm chart
+        shell: |
+          echo "Unstalling jenkins helm chart"
+          helm delete {{ namespace }} -n {{ namespace }}
+        args:
+          executable: /bin/bash
+      - name: Delete a k8s namespace
+        k8s:
+          name: "{{ namespace }}"
+          api_version: v1
+          kind: Namespace
+          state: absent
+      - name: Delete a global address for load balancer
+        gcp_compute_global_address:
+          name: "jenkins-gke-ip"
+          project: "{{ gcp_project_id }}"
+          auth_kind: serviceaccount
+          service_account_file: "{{ sa_file }}"
+          state: absent
+        when: staticIP == True
+    when: delete == True

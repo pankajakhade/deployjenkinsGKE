@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-statefulset
+  labels:
+    app: {{ .Release.Name }}-statefulset
+spec:
+  serviceName: {{ .Release.Name }}-statefulset
+  replicas: {{ .Values.statefulset.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-statefulset
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-statefulset
+    spec:
+      securityContext:
+        fsGroup: 1000 
+        runAsUser: 0
+      containers:
+      - name: {{ .Release.Name }}
+        image: {{ .Values.images.registry }}:{{ .Values.images.tag }}
+        imagePullPolicy: {{ .Values.images.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.ports.master }}
+        readinessProbe:
+          httpGet:
+            path: /login
+            port: {{ .Values.statefulset.container.port }}
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 2
+          failureThreshold: 5
+        volumeMounts:
+        - mountPath: /var/jenkins_home
+          name: jenkins-home
+      volumes:
+      - name: jenkins-home
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-pvc
