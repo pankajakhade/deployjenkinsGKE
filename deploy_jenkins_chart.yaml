@@ -1,6 +1,5 @@
 - hosts: localhost
   vars:
-  #  sa_file: "~/Downloads/service-exploration-280814-57f53738df29.json"
     sa_file: "{{ lookup('env','gcp_service_account_file') }}"
   vars_files:
     - external_vars.yaml

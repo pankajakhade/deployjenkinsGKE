@@ -2,6 +2,7 @@
 from argparse import ArgumentParser
 from subprocess import call
 from termcolor import colored
+from os import environ
 
 def set_vars(args):
     with open('external_vars.yaml', 'w') as f:
@@ -22,7 +23,8 @@ if(__name__ == '__main__'):
     action.add_argument('--create', action='store_true', help='Install helm chart')
     action.add_argument('--delete', action='store_true', help='Uninstall helm chart')
     args = parser.parse_args()
-
+    service_account_file = "~/Downloads/service-exploration-280814-57f53738df29.json"
+    environ['gcp_service_account_file'] = service_account_file
     set_vars(args)
     if args.create:
         print(colored('Installing jenkins helm chart','yellow'))
