@@ -1,0 +1,9 @@
+domain: abc
+dnsPod: False
+staticIP: False
+create: True
+namespace: gke
+removeUsers: []
+env_var: abc
+gcp_project_id: service-exploration-280814
+delete: False
